@@ -4,4 +4,4 @@ PHP scripts for creates web projects.
 
 
 # csc.php ->
-has ability to go threw entire directory and display by for loop  used to display galery image.
+has ability to go through entire directory and display  all files by for loop.  Used to display galery image.
