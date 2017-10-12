@@ -1,0 +1,203 @@
+## Note That I will not save that file as .php extension because it will just hold source code for important informations.
+## Depeneds on project but you may create as class or just as script. I used for the cakephp tried as class.
+## Unfortunately on production site doesn't work as exptected so I had to rewrite as normal script which was bullshit.
+
+
+<---------------------------------------------------- FIRST STEP -------------------------------------------------->
+
+## Google Api must be activeted via google console over here : 
+LINK: https://console.developers.google.com/apis/dashboard?project=church-info-50a9b&duration=PT1H
+
+Documentation for php api for google: https://developers.google.com/api-client-library/php/start/get_started
+
+Documentation for google drive api: https://developers.google.com/drive/v3/web/about-sdk
+
+
+
+
+<------------------ IMPORTANT IMPORTANT IMPORTANT --------------------------------------------->
+
+MAKE SURE YOU HAVE THE PROJECT FIRST OR CREATE ONE.
+ 
+WE NEED TO ACTIVE OUR SERVICE IN API AND CREATE KEY SUCH AS CLIENT SECRET.JSON FOR THE PROJECT 
+
+I CREATED NEW FOR GOOGLE DRIVE API AS INTERFACE (CHOOSE AS OTHERS YOU WILL SEE IN THIRD STEP WHY :)  ).
+
+THAN YOU SELECT USER (I CHOSED THAT BECAUSE I WANTED THAT BACKUPS SAVES ON MY ACCOUNT) 
+OR GIVE PRIVILGIES  I DIDN'T TESTED SO I DON'T 
+IF WORKS.
+
+
+IF EVERYTHING WENT FINE YOU WILL GET YOU SECRET JSON CLIENT INFO
+
+
+DOWNLOAD AND CHANGE THE NAME FILE TO CLIENT_CUSTOMCHARS.json OR YOU DON'T CARE JUST client.json
+
+PUT SOMEWEHERE WHERE THE FILES HAS JUST READ WRITES AND IS NOT VISILBE VIA BROWSER.
+
+THIS FILES CONTAINS SOME CUSTOMS INFORMATIONS BUT CURRENTLY VERSION OF API : 29.09.2017 DOESN'T SUPPORT THEM.
+
+IFNORMATIONS SUCH AS :
+
+- client_id
+- project_id
+- auth_uri
+- token_uri
+- auth_provider_x509_cert_url
+- client_secret
+- redirect_uris
+
+
+MAKE SURE YOU HAVE ALL THESE IN YOUR CLIENT.JSON OTHERWISE YOU DONE SOMETHING WRONG OR CHOOSE ANOTHER WAY OF CREATING JSON FILE.
+
+
+
+<------------------ IMPORTANT IMPORTANT IMPORTANT  ENDING ENDING ENDING --------------------------------------------->
+
+##This Google API for google drive needs that make sure you downloaded or install via composer :
+
+VIA COMPOSER : composer require google/apiclient:^2.0
+
+VIA WEB LINK : https://github.com/google/google-api-php-client
+
+
+
+# Finally, be sure to include the autoloader:
+
+require_once '/path/to/your-project/vendor/autoload.php';
+
+
+
+
+<--------------------------------------------- SECOND STEP --------------------------------------------------------------->
+
+___________________________________________________________________________
+
+# YOU CAN CREATE SCRIPTS OR CLASS WITH CODE BELOW 
+
+___________________________________________________________________________
+
+
+# First these are the most important settings for large database exectu via php (More experience users knows about that ;)).
+
+
+@error_reporting(E_ALL ^ E_WARNING);
+@ini_set("max_execution_time", 300);
+@ini_set("memory_limit", "256M");
+
+
+
+    # We have to hold our connections via server sometimes it is PDO or mysqli but if you are thinking about backup
+    # so you have already your connections code somewhere.
+    
+        $db_name = $connection['database'];
+        $db_username = $connection['username'];
+        $db_passwd = $connection['password'];
+       
+    # We create sql file and zipped already to the backup folder but make sure this forlder has 777 chmod.
+    
+        $sql_file = "dump_" . $db_name . "_" . new date(). ".sql";
+        exec("mysqldump -u $db_username  -p'$db_passwd' --allow-keywords --add-drop-table --complete-insert --quote-names $db_name > backup/$sql_file && gzip  /backup/$sql_file ", $output, $return);
+   
+
+      
+        $data = "/backup/" . $sql_file . ".gz";
+        $title = "backup_" . $db_name . "_" . new date();
+      
+        
+        $result = sendFileToTheServer($data, $title, $code);
+        
+        if ($result) {
+            unlink("backup/" . $sql_file . ".gz");
+        } else {
+            unlink("backup/" . $sql_file . ".gz");
+        }
+    
+    
+  
+
+<--------------------------------------------- THIRD STEP --------------------------------------------------------------->
+
+# CREATE FILE WHERE WILL BE GOOGLE API SUCH AS BELOW 
+
+
+                    ##################################################################################################
+                                    MAKE SURE TO HAVE PATH TO CLASS OF GOOGLE API
+                    ##################################################################################################
+                                    require_once("google-api-php-client/src/Google_Client.php");
+                                   ---------------------------------------------------------------
+                                   
+             $client_id = "IT_IS_CLIEN_ID_OF_API_YOU_CREATED_IN_GOOGLE_CONSOLE_COPY_IT_IN_TO_THIS_VARIABLE"
+             $client_secret = "THS_IS_PATH_TO_CLIEN_JSON_FILE"
+             
+             // THIS IS THE SCOPE FOR THE CLASS OR YOU CAN SELECT AFTER WHILE CONNECTING TO THE CLIENT SEE BELOW
+             //THIS IS NOT IMPORRANT DEPENDS IF IS IT SCRIPT OR CLASS 
+             $scopes = implode('', array(
+            \Google_Service_Drive::DRIVE_METADATA_READONLY)     );
+                
+                
+       // THE MOST IMPORTANT FUNCTION AND THE WORST BECAUSE MAY CHANGE IN FEW MONTHS:
+       
+        public function getClient() {
+        
+        $client = new \Google_Client();
+        
+        $client->setApplicationName("NAME OF YOUR API");
+        
+        // SELECT THIS SCOPE MEANS THAT YOU WANT TO USE GOOGLE DRIVE AUTH
+        $client->setScopes('https://www.googleapis.com/auth/drive');
+        
+        $client->setAuthConfig($client_secret);
+        $client->setAccessType('offline');
+        $client->setApprovalPrompt('force');
+
+        // Load previously authorized credentials from a file.
+        $credentialsPath = $this->path_to_credientials;
+        $dir = new Folder(WWW_ROOT . $credentialsPath);
+        $file = new File($dir->pwd() . 'token.json');
+        if ($file->exists()) {
+
+            $accessToken = json_decode(file_get_contents('backup/token.json'), true);
+        } else {
+            //Request authorization from the user.
+            //  $authUrl = $client->createAuthUrl();
+            //echo $authUrl;
+            //  die();
+            // $authCode = "4/ik-Bch4St4NCeM0N56my92H8aJB0vbnSo7uOSqLgjY4";
+            if ($authCode == null) {
+                die();
+            } else {
+                // Exchange authorization code for an access token.
+                $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
+                // Store the credentials to disk.
+                if (!$file->exists()) {
+                    $file = new File($dir->pwd() . 'token.json', true, 0700);
+                    $file->write(json_encode($accessToken));
+                }
+            }
+        }
+        $client->setAccessToken($accessToken);
+        // Refresh the token if it's expired.
+        if ($client->isAccessTokenExpired()) {
+            $refreshTokenSaved = $client->getRefreshToken();
+
+            // update access token
+            $client->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
+
+            // pass access token to some variable
+            $accessTokenUpdated = $client->getAccessToken();
+
+            // append refresh token
+            $accessTokenUpdated['refresh_token'] = $refreshTokenSaved;
+
+            //Set the new acces token
+            $accessToken = $refreshTokenSaved;
+            $client->setAccessToken($accessTokenUpdated);
+        }
+        return $client;
+    }
+                                   
+
+
+
+
