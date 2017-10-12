@@ -1,6 +1,28 @@
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ADD THIS TO THIS TUTOURIAL WHERE TO ADD PRIVILEGS FOR THE USERS TO DO ALL 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ADD THIS TO THIS TUTOURIAL WHERE TO ADD PRIVILEGS FOR THE USERS TO DO ALL 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ADD THIS TO THIS TUTOURIAL WHERE TO ADD PRIVILEGS FOR THE USERS TO DO ALL 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ADD THIS TO THIS TUTOURIAL WHERE TO ADD PRIVILEGS FOR THE USERS TO DO ALL 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  ADD THIS TO THIS TUTOURIAL WHERE TO ADD PRIVILEGS FOR THE USERS TO DO ALL 
+
+ALSO GIVE PRIVILEGES TO 
+
+
 ## Note That I will not save that file as .php extension because it will just hold source code for important informations.
 ## Depeneds on project but you may create as class or just as script. I used for the cakephp tried as class.
 ## Unfortunately on production site doesn't work as exptected so I had to rewrite as normal script which was bullshit.
+
+## IT IS FRUSTENING WHY YOU HAVE TO THIS AT BEGGING I KNOW BUT THEY DID THAT FOR USER INTERFACE AND DIDN'T EXPECT THAT 
+## PEOPLE WILL USE IT FOR THE BACKUP SYSTEM.
+
+## ONCE YOU DO THE STEPS BELOW YOU CAN GET BACKUPING YOUR WILES WHILE SCRIPT IN CRON ON YOUR WEBHOSTING
+
+
+      ## 1. OPEN THE CODE IF IT ALREADY WORKING TO CREATE TOKEN WHICH CONTAINS TOKEN AND RERESH TOKEN
+      ## 2. COPY THE URL WHICH WILL DISPLAY ACTIVE THE APP FOR THE USER YOU AHVE CHOOSE
+      ## 3. COPY THE CODE TO THE URL AND COMMENT THE LINE WHICH WAS COMMENT AT THE BEGGING SEE CODE BELOW
+      ## 4. ONCE YOU DID IT YOU WILL GET THE FILE WITH TOKEN AND THAT'S YOU WILL GETTING BACKUP ON YOUR DRIVE ZIPPED 
+      
+      Remark : 
 
 
 <---------------------------------------------------- FIRST STEP -------------------------------------------------->
@@ -106,6 +128,7 @@ ___________________________________________________________________________
       
         
         $result = sendFileToTheServer($data, $title, $code);
+        IF THE FUNCTION RETURN TRUE DELETE OR IF NOT TRUE ASLO BECAUSE YOU NEVER KNOW WHO IS WATCHING !!@#!@#!@#!@
         
         if ($result) {
             unlink("backup/" . $sql_file . ".gz");
@@ -129,6 +152,7 @@ ___________________________________________________________________________
                                    
              $client_id = "IT_IS_CLIEN_ID_OF_API_YOU_CREATED_IN_GOOGLE_CONSOLE_COPY_IT_IN_TO_THIS_VARIABLE"
              $client_secret = "THS_IS_PATH_TO_CLIEN_JSON_FILE"
+             $path_to_backup = "/backup/"
              
              // THIS IS THE SCOPE FOR THE CLASS OR YOU CAN SELECT AFTER WHILE CONNECTING TO THE CLIENT SEE BELOW
              //THIS IS NOT IMPORRANT DEPENDS IF IS IT SCRIPT OR CLASS 
@@ -140,6 +164,7 @@ ___________________________________________________________________________
        
         public function getClient() {
         
+        // IF YOU DON't SEE GOOGLE_CLIENT() MAKE SURE TO CHECK THE PATH TO GOOGLE CLASS API
         $client = new \Google_Client();
         
         $client->setApplicationName("NAME OF YOUR API");
@@ -148,31 +173,34 @@ ___________________________________________________________________________
         $client->setScopes('https://www.googleapis.com/auth/drive');
         
         $client->setAuthConfig($client_secret);
+        //We want to do it just once and than we will be able to do it without remake of entire functionality
         $client->setAccessType('offline');
+        // no asking about for which user once again
         $client->setApprovalPrompt('force');
 
         // Load previously authorized credentials from a file.
-        $credentialsPath = $this->path_to_credientials;
-        $dir = new Folder(WWW_ROOT . $credentialsPath);
-        $file = new File($dir->pwd() . 'token.json');
-        if ($file->exists()) {
+
+       
+       $file = file_get_contents($path_to_backup."/token.json");
+        if (file_exists($file)) {
 
             $accessToken = json_decode(file_get_contents('backup/token.json'), true);
         } else {
-            //Request authorization from the user.
-            //  $authUrl = $client->createAuthUrl();
-            //echo $authUrl;
-            //  die();
-            // $authCode = "4/ik-Bch4St4NCeM0N56my92H8aJB0vbnSo7uOSqLgjY4";
-            if ($authCode == null) {
+            //Request authorization from the user
+            //  $authUrl = $client->createAuthUrl();                  <--------- THIS COMMENT PART IS JUST FOR FIRST TIME
+            //echo $authUrl;                                          <--------- FOR GET THE TOKEN BY COPY THE URL TO BROWSER
+            //  die();                                                <--------- ONCE WE GET THE AUTH CODE IS CORRECT 
+                                                                      <----- STUPID BUT YOU NEED COPY THIS CODE MAUNAL TO THE PHP SCRIPT
+            // $authCode = "";                                        <--------- COMMENT AGAIN THESE LINES 
+            if ($authCode == null) {                                  <---------- RUN SCRIPT AGAIN AND YOU WILL SEE THAT THE SCRIPT WORKS
                 die();
             } else {
                 // Exchange authorization code for an access token.
                 $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
                 // Store the credentials to disk.
-                if (!$file->exists()) {
-                    $file = new File($dir->pwd() . 'token.json', true, 0700);
-                    $file->write(json_encode($accessToken));
+                if (!file_exists($file)) {
+                     $accessToken = $client->authenticate($authCode);      
+                  file_put_contents("backup/token.json",$accessToken);  
                 }
             }
         }
@@ -196,6 +224,69 @@ ___________________________________________________________________________
         }
         return $client;
     }
+    
+    ##########################################################################################################################
+    ##########################################################################################################################
+    ##########################################################################################################################
+    
+    
+    SEND FUNCTION WHICH CONTAINS  TITLE AND DATA TO BE STORE IN GOOGLE DRIVE IN FOLDER WHERE WILL GET THE ID
+    public function sendFileToTheServer($data = null, $title = null) {
+
+        $client = $this->getClient()
+        
+        SOMETIMES YOU WILL NOT ABLE TO FIND GOOGLE_SERVICE_DRIVE AND YOU NEED TO DOWNLOAD MANULLLY OR FIND IN THE FILES.
+        
+        $service = new \Google_Service_Drive($client);
+        
+     #THIS TO IS NECCERERALY TO FIND AS THE CODE AND COMMENT THE LIENS  I WILL TRY TO FIND ANOTHER WAY
+     #IF YOU WANT TO HAVE YOU BACKUP IN FOLDER WITH SUCH NAME YOU WILL NOT TO GET ID OF IT 
+     #THE PROBLEM WITH API IS YOU NEED TO PRINT IT MANNAULY AND COPY HARDCORE IN TO THE CODE AS I DID
+        
+        $folderId = 'GENERATED ID WITH CODE BELOW';
+        
+        $file = new \Google_Service_Drive_DriveFile();
+        $file->setParents(array($folderId));
+        $file->setName($title . ".gz");
+
+        $file->setDescription("Server backup file");
+        /*
+         * Code to obtain folder id still searching for good function.
+          $pageToken = null;
+          do {
+          $response = $service->files->listFiles(array(
+
+          'mimeType' => "application/vnd.google-apps.folder'",
+          'spaces' => 'drive',
+          'pageToken' => $pageToken,
+          'fields' => 'nextPageToken, files(id, name)',
+          ));
+          foreach ($response->files as $file) {
+          printf("Found file: %s (%s)\n", $file->name, $file->id);
+          }
+
+          $pageToken = $repsonse->pageToken;
+          } while ($pageToken != null);
+
+               */
+        
+        
+        
+        if ($data != null) {
+           $path = "path to sql files"
+            $createdFile = $service->files->create($file, array(
+                'data' => file_get_contents($path,
+                'mimeType' => 'application/octet-stream',
+                'uploadType' => 'multipart',
+                'fields' => 'id'                   <------ THIS IS IF YOU WANT PUT IN THE FOLDER
+            ));
+            // print_r($createdFile);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
                                    
 
 
