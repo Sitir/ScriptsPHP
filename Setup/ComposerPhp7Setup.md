@@ -33,5 +33,10 @@ curl -sS https://getcomposer.org/installer | php
 composer -v 
 ```
 
+##### Docker Compose file.
+It contains mysql and php-my-admin to no need to install mysql and phpmyadmin localy, editing this file may give you <br/> flexiblity to add others databases engines etc. <br/>
+**(Update 2019)**
+No need to use php my admin but I will leave it, You can use MySQL Workbench.
+
 
 by Patryk Michno
