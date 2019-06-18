@@ -20,12 +20,12 @@ curl -sS https://getcomposer.org/installer | php
 ```
 ##### Move composer to globaly localization(next step is required)
 ```sh
-mv composer.phar /usr/local/bin/composer
+(sudo) mv composer.phar /usr/local/bin/composer
 ```
 ##### Setup Permisison
 
 ```sh
-chmod +x /usr/local/bin/composer
+(sudo) chmod +x /usr/local/bin/composer
 ```
 
 ##### Check for version and if it's installed properly
