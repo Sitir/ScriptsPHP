@@ -1,8 +1,8 @@
 # ScriptsPHP
 PHP scripts for creates web projects. 
 
-## Setup Php, Composer, Development Tools
-[Setup.md](Setup/ComposerPhp7Setup.md)
+##  [Setup Php, Composer, Development Tools](Setup/ComposerPhp7Setup.md)
+ 
 
 
 
